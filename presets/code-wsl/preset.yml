@@ -1,0 +1,3 @@
+name: Code Mode (WSL)
+description: Code Mode with the terminal swapped to Linux bash inside WSL. Same as code, but exposes the bash tool and disables pwsh.
+order: 3

@@ -1,0 +1,142 @@
+# The `minimal-wsl` agent preset: the `minimal` two-tool composition, but with
+# the shell swapped to Linux bash running inside WSL (enforced by bubblewrap).
+#
+# Why one-shot (not persistent) bash:
+#   The shipped `minimal` preset's persistent bash relies on the PTY seam
+#   (dsh-terminal + terminal-bash), whose subprocess-local backend does NOT
+#   implement foreground inspection on Windows — it throws
+#   "terminal inspection is unsupported on platform win32". A faithful
+#   persistent WSL shell would require reimplementing ~600 lines of PTY
+#   session management around node-pty, for a marginal benefit (cwd/env
+#   persistence) that self-contained one-shot commands (`cd x && cmd`, absolute
+#   paths) already cover. Deliberately NOT done.
+#
+# So this preset uses the one-shot `tool-bash`, which runs every command
+# through the host `ctx.shell` — the wsl-bash executor (wsl.exe + bwrap),
+# mounted on the HOST plane by packages/dsh-wsl-bash/cordis.patch.yml.
+
+# ── identity ────────────────────────────────────────────────────────────────
+
+# ── bootstrap (must stay FIRST) ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+# Anchored bootstrap (from xiaobright/dsh-anchored-standard, MIT): keep the
+# FIRST model request on a tiny tool surface (bash + read) with a small output
+# budget, then expose this preset's full catalog after the first durable
+# promotion signal (a tool call OR the first assistant message, promoteOn:
+# either). Request #1 always sees the bootstrap catalog; request #2+ sees all
+# tools below. This row MUST stay first: the system-prompt/assemble waterfall
+# applies after-next transforms in reverse registration order, so registering
+# first makes this filter the final transform.
+- id: tool-bootstrap
+  name: ./tool-bootstrap.mjs
+  config:
+    shellTools: [bash]
+    commonTools: [read]
+    promoteOn: either
+    bootstrapMaxTokens: 1024
+
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: You are a helpful software engineer assistant.
+    complete: true
+    includeRuntimeContext: false
+
+# ── shell ───────────────────────────────────────────────────────────────────
+
+# One-shot bash over the host ctx.shell (= wsl-bash + bwrap). Background
+# execution is disabled to keep the preset minimal and avoid a jobs-registry
+# dependency; long-lived commands finish within the timeout.
+- id: tool-bash
+  name: '@deepseek-ai/dsh-tool-bash'
+  disabled: false
+  config:
+    enableRunInBackground: false
+
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: true
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+# Plan state is per-agent by nature, so an entry-local realm is the correct
+# lifetime. The host web profile disables plan-mode and lets presets mount it.
+
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |
+              You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+
+              Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+
+              The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+
+              Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+
+              Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+
+              When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+
+# ── compaction ──────────────────────────────────────────────────────────────
+# `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner
+# must share this realm rather than sit outside it. The host web profile
+# disables these and lets presets mount them; this preset mounts them so
+# /compact works.
+
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── filesystem + editor (verbatim from shipped minimal) ─────────────────────
+
+- id: filesystem
+  name: cordis:group
+  group: true
+  isolate:
+    fs: true
+  config:
+    - id: fs-local
+      name: '@deepseek-ai/dsh-fs-local'
+      config:
+        cwd: !!js process.env.DSH_CWD ?? process.cwd()
+
+    - id: str-replace-editor
+      name: '@deepseek-ai/dsh-tool-str-replace-editor'
+      config:
+        maxOutputChars: 16000
+
+    # read/write/edit — shares the same local fs realm as str_replace_editor
+    # (fs-local), so all file tools see one filesystem. read_image is NOT
+    # registered here: it needs the attachments service, which this preset
+    # does not mount.
+    - id: tool-fs
+      name: '@deepseek-ai/dsh-tool-fs'
+
+    # glob/grep — ripgrep-backed discovery; same realm for one coherent view.
+    # sampleOverCapGlobResults: false keeps a glob over the cap deterministic
+    # (modification-time-ordered head) instead of sampling across top entries.
+    - id: tool-fs-search
+      name: '@deepseek-ai/dsh-tool-fs-search'
+      config:
+        sampleOverCapGlobResults: false

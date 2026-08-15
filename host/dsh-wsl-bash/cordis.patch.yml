@@ -1,0 +1,23 @@
+# dsh-wsl-bash: swap the model's terminal from PowerShell to Linux bash in WSL.
+#
+# Top-level array of loader patch entries:
+#   - { id, ... } overrides an existing row by id (disable pwsh-sandbox),
+#   - { insert: [...] } adds NEW rows (mount wsl-bash as ctx.shell).
+#
+# Apply as a --patch overlay, or merge these entries into
+# $DSH_HOME/profiles/web/cordis.patch.yml.
+#
+# The host plane owns exactly one ctx.shell provider. On Windows the base bundle
+# disables bash-sandbox and enables pwsh-sandbox; these entries flip that:
+#   - disable pwsh-sandbox (the PowerShell ctx.shell executor),
+#   - mount wsl-bash (our ctx.shell executor that runs bash inside WSL).
+# The model-facing tool rows are preset-owned and are NOT touched here; use the
+# `code-wsl` preset (or flip tool-bash/tool-pwsh in your own preset).
+- id: pwsh-sandbox
+  disabled: true
+
+- insert:
+    - id: wsl-bash
+      name: 'file:///F:/codexprojects/deepseek-harnes/packages/dsh-wsl-bash/lib/index.js'
+      config:
+        timeoutMs: 120000

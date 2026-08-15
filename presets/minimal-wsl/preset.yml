@@ -1,0 +1,3 @@
+name: 极简模式 (WSL)
+description: 极简双工具编码 Agent：bash 在 WSL Linux 里运行（bubblewrap 沙箱），加上 str_replace_editor。终端与沙箱都在 Linux 侧。
+order: 4
