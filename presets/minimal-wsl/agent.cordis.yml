@@ -32,7 +32,7 @@
     shellTools: [bash]
     commonTools: [read]
     promoteOn: either
-    bootstrapMaxTokens: 1024
+    bootstrapMaxTokens: 16384
 
 - id: persona
   name: '@deepseek-ai/dsh-persona'
