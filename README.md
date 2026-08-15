@@ -16,6 +16,15 @@
 
 ---
 
+## 🐋 收录于 DSH 创意工坊
+
+本仓库已打上 `dsh-plugin` topic，会被 [DSH 创意工坊](https://github.com/JxaMe/dsh-workshop) 每日自动扫描收录。
+
+- 创意工坊在线地址：https://JxaMe.github.io/dsh-workshop/
+- 收录方式：GitHub topic `dsh-plugin` 自动发现
+
+---
+
 ## 目录结构
 
 ```text
