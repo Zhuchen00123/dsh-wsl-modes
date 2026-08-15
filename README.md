@@ -147,6 +147,7 @@ dsh --profile web --patch F:\path\to\dsh-wsl-modes\host\dsh-wsl-bash\cordis.patc
 - **路径问题**：bash 内看到的是 WSL 路径（`/mnt/f/...`），而 `read/write/edit/str_replace_editor` 运行在 Windows 主机，需要 Windows 路径（`F:\...`）。模型调用文件工具前应使用 `wslpath -w /mnt/f/...` 转换，或直接使用 Windows 路径。
 - **不要多进程写同一 session**：DSH 的 session 日志是 append-only，多个 dsh 进程同时写同一会话会损坏日志。测试不同模式请用不同会话，或先退出旧进程。
 - **Windows PTY 限制**：官方 minimal 的持久 bash 依赖 PTY seam，在 Windows 上不可用；本方案使用一次性 `tool-bash`，每条命令独立运行。
+- **code-wsl 输出截断**：`code-wsl` 的 `bootstrapMaxTokens` 已设为 `16384`，避免首轮 PTC 因 1024 上限被截断。若仍遇到 `invalid pi-ai replay state: block count does not match assistant content`，通常是 DSH 在“继续”截断回复时的 pi-ai replay 状态同步问题；可先发一条新消息代替“继续”，或把 `bootstrapMaxTokens` 再调大。
 
 ---
 

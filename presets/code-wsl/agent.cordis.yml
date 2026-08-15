@@ -41,7 +41,7 @@
     shellTools: [bash]
     commonTools: [read]
     promoteOn: either
-    bootstrapMaxTokens: 1024
+    bootstrapMaxTokens: 16384
 
 # Persona is byte-identical to the Minimal preset: the two-phase anchor needs
 # the Minimal system-prompt condition on request #1. `complete` prevents the
