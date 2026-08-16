@@ -43,6 +43,12 @@
       - Never put the final answer to the user in the reasoning/thinking field.
       - Never output internal reasoning as visible text before calling tools.
       - Use the reasoning field only for private step-by-step thinking; the final user-facing answer must be in the text field.
+      Path convention (Windows + WSL):
+      - In bash, always use WSL paths (e.g. /mnt/f/projects/...).
+      - In read/write/edit/str_replace_editor, always use Windows paths (e.g. F:\projects\...).
+      - Convert WSL -> Windows: wslpath -w /mnt/f/projects/...
+      - Convert Windows -> WSL: wslpath -u 'F:\projects\...'
+      - Never pass /mnt/f/... to Windows file tools; never pass F:\... to bash.
     complete: true
     includeRuntimeContext: false
 
