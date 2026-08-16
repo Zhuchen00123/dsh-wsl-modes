@@ -19,10 +19,19 @@ This preset `router-flash-godmode-wsl` is an **adapted** version of:
 2. **Compaction**: uses `dsh-compaction-cacheaware` (Reasonix-style)
    instead of `@deepseek-ai/dsh-compaction-basic`.
 3. **Metadata**: renamed to "Router Flash Godmode (WSL)".
+4. **Flash-only**: `isFlashModel` always returns `true`; the weak persona is
+   always `WEAK_FLASH` (no Pro routing).
+5. **Runtime contexts preserved** after promotion (`contexts:
+   assembled.contexts` instead of `[]`).
+6. **Path convention** is injected after promotion (not in the first round).
+7. **First-round purity**: skill-catalog / agent-instructions injections are
+   stripped during bootstrap.
+8. **Persona optimized** with the paper's "commit to a decision and act"
+   anchor (deep-then-converge).
 
 ## Files
 
 - `agent.cordis.yml` — preset composition (modified)
 - `preset.yml` — display metadata (modified)
-- `router-bootstrap.mjs` — bootstrap/router plugin (from upstream, unchanged)
-- `router-core.mjs` — routing/persona core (from upstream, unchanged)
+- `router-bootstrap.mjs` — bootstrap/router plugin (modified)
+- `router-core.mjs` — routing/persona core (modified)

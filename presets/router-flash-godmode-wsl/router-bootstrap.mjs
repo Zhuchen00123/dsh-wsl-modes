@@ -23,6 +23,13 @@ export const inject = ['systemPrompt', 'tools']
 
 export function apply(ctx, config) {
   const overrides = new Map() // session id -> explicit mode（预留，供未来外部调优）
+  const PATH_CONVENTION =
+    'Path convention (Windows + WSL):\n'
+    + '- In bash, always use WSL paths (e.g. /mnt/f/projects/...).\n'
+    + '- In read/write/edit/str_replace_editor, always use Windows paths (e.g. F:\\projects\\...).\n'
+    + '- Convert WSL -> Windows: wslpath -w /mnt/f/projects/...\n'
+    + "- Convert Windows -> WSL: wslpath -u 'F:\\projects\\...'\n"
+    + '- Never pass /mnt/f/... to Windows file tools; never pass F:\\... to bash.'
 
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
     const assembled = await next()
@@ -40,7 +47,11 @@ export function apply(ctx, config) {
     const sections = applyPersona(assembled.sections, persona)
 
     if (session.events.some((event) => event.type === 'tool/call')) {
-      return { ...assembled, sections, contexts: assembled.contexts } // promoted: full catalog
+      return {
+        ...assembled,
+        sections: [...sections, { name: 'path-convention', text: PATH_CONVENTION, order: 1 }],
+        contexts: assembled.contexts,
+      } // promoted: full catalog + path convention
     }
 
     const core = new Set(coreFor(mode))
@@ -56,6 +67,21 @@ export function apply(ctx, config) {
       sections,
       contexts: [],
       tools: assembled.tools.filter((tool) => core.has(tool.name)),
+    }
+  })
+
+  // First-round purity: strip skill-catalog / agent-instructions injections
+  // while bootstrapping (mirrors dsh-wsl-modes tool-bootstrap).
+  const BOOTSTRAP_INJECTED_SOURCE_KINDS = new Set(['skill-catalog', 'agent-instructions'])
+  ctx.on('agent/pre-step', async (payload, next) => {
+    const decision = await next()
+    if (decision.kind === 'reject') return decision
+    const agent = payload?.agent
+    if (agent === undefined || agent.session === undefined) return decision
+    if (agent.session.events.some((event) => event.type === 'tool/call')) return decision
+    return {
+      ...decision,
+      messages: decision.messages.filter((message) => !BOOTSTRAP_INJECTED_SOURCE_KINDS.has(message.source?.kind)),
     }
   })
 }
