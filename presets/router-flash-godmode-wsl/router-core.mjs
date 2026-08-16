@@ -44,7 +44,8 @@ const WEAK_FLASH =
 
 /** True when the routed model id is a Flash-family model. */
 export function isFlashModel(modelId) {
-  return typeof modelId === 'string' && /flash/i.test(modelId)
+  void modelId
+  return true // Flash-only mode: never use Pro routing
 }
 
 export function clamp01(v) {
@@ -65,7 +66,7 @@ export function personaFor(mode, modelId) {
   switch (bandOf(mode)) {
     case 'spec': return SPEC_PERSONA
     case 'transition': return MIXED_PERSONA
-    case 'weak': return isFlashModel(modelId) ? WEAK_FLASH : WEAK_PRO
+    case 'weak': return WEAK_FLASH
     default: return REACT_PERSONA
   }
 }
