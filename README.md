@@ -39,6 +39,8 @@
 
 完整来源与改动记录见 [`presets/router-flash-godmode-wsl/NOTICE.md`](presets/router-flash-godmode-wsl/NOTICE.md)。
 
+原版论文研究笔记见 [docs/router-standard-paper-notes.md](docs/router-standard-paper-notes.md)。
+
 ---
 
 ## 🐋 收录于 DSH 创意工坊

@@ -40,7 +40,7 @@ const WEAK_FLASH =
   + 'Before acting, decide the task type (build or fix) and adopt the matching '
   + 'style: build → hands-on production; fix → inspect-and-plan.\n'
   + 'Before acting, briefly review what you have already done in this session and continue from where you left off; do not repeat completed steps. Do not run environment checks (echo, whoami, uname, node --version, date) or exhaustive grep/glob scans.\n'
-  + 'Think deeply about the architecture, edge cases, and integration points before writing. Do not spend reasoning on the environment or tooling. Produce when your information is complete, and end each reasoning block with a decision or an information need.'
+  + 'Think deeply about the architecture, edge cases, and integration points before writing. Do not spend reasoning on the environment or tooling. After deep thinking, commit to a decision and act: produce the deliverable, then verify it by reading and running. End each reasoning block with a decision or an information need.'
 
 /** True when the routed model id is a Flash-family model. */
 export function isFlashModel(modelId) {
