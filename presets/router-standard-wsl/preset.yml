@@ -1,0 +1,2 @@
+name: Router Standard (WSL)
+description: 'Router Standard 原版（WSL 版）：RL 接口还原 + shell/str_replace_editor 首轮，WSL bash/bwrap，首次 tool call 后放开全量。'
