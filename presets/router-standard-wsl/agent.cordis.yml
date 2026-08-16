@@ -172,7 +172,7 @@
 # keys every fold by Session, and owns the context-meter projection units the
 # browser reads for every session — behind a realm those units would come and go
 # with whichever presets happen to be mounted. What a preset chooses is whether
-# its agent compacts at all, which is `compaction-basic` below.
+# its agent compacts at all, which is `dsh-compaction-cacheaware` below.
 - id: compaction
   name: cordis:group
   group: true
@@ -180,8 +180,15 @@
     compaction: true
     toolResultPruner: true
   config:
-    - id: compaction-basic
-      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: compaction-cacheaware
+      name: 'dsh-compaction-cacheaware'
+      config:
+        compactRatio: 0.85
+        checkpointCeilingRatio: 0.5
+        recentTailRatio: 0.1
+        recentTailMinTokens: 8192
+        recentTailMaxTokens: 16384
+        summaryMaxTokens: 16384
 
     - id: command-compact
       name: '@deepseek-ai/dsh-command-compact'

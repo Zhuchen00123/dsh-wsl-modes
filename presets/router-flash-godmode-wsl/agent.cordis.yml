@@ -166,8 +166,8 @@
         compactRatio: 0.85
         checkpointCeilingRatio: 0.5
         recentTailRatio: 0.1
-        recentTailMinTokens: 32768
-        recentTailMaxTokens: 98304
+        recentTailMinTokens: 8192
+        recentTailMaxTokens: 16384
         summaryMaxTokens: 16384
 
     - id: command-compact
