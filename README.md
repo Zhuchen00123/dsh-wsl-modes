@@ -96,7 +96,18 @@ Copy-Item -Recurse -Force .\presets\minimal-wsl $dest
 Copy-Item -Recurse -Force .\presets\code-wsl $dest
 ```
 
-### 3. 挂载 WSL bash 执行器
+### 3. 安装 compaction 插件
+
+`code-wsl` / `minimal-wsl` 使用 `dsh-compaction-cacheaware` 作为 compaction 后端（Reasonix 风格）。需要在 DSH profile 中安装该包：
+
+```powershell
+cd "$env:USERPROFILE\.dsh\profiles\web"
+pnpm add dsh-compaction-cacheaware@github:Zhuchen00123/dsh-compaction-cacheaware
+```
+
+> 以后如果发布到 npm registry，可直接 `pnpm add dsh-compaction-cacheaware`。
+
+### 4. 挂载 WSL bash 执行器
 
 启动 DSH Web 时带上本仓库的 host patch：
 
@@ -106,7 +117,7 @@ dsh --profile web --patch F:\path\to\dsh-wsl-modes\host\dsh-wsl-bash\cordis.patc
 
 > 也可以把 `cordis.patch.yml` 的内容合并进你的 profile `cordis.patch.yml`，这样不用每次带 `--patch`。
 
-### 4. 使用
+### 5. 使用
 
 在 Web UI 里点“新建会话”，选择：
 
