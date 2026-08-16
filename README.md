@@ -102,10 +102,11 @@ Copy-Item -Recurse -Force .\presets\code-wsl $dest
 
 ```powershell
 cd "$env:USERPROFILE\.dsh\profiles\web"
-pnpm add dsh-compaction-cacheaware@github:Zhuchen00123/dsh-compaction-cacheaware
+pnpm add dsh-compaction-cacheaware
 ```
 
-> 以后如果发布到 npm registry，可直接 `pnpm add dsh-compaction-cacheaware`。
+> 如果暂时不想用 npm registry，也可以从 GitHub 安装：
+> `pnpm add dsh-compaction-cacheaware@github:Zhuchen00123/dsh-compaction-cacheaware`
 
 ### 4. 挂载 WSL bash 执行器
 
