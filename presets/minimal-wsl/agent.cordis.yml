@@ -93,6 +93,13 @@
 
               When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
 
+# ── skills ──────────────────────────────────────────────────────────────────
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
 # ── compaction ──────────────────────────────────────────────────────────────
 # `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner
 # must share this realm rather than sit outside it. The host web profile
