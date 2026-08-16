@@ -95,8 +95,15 @@
     compaction: true
     toolResultPruner: true
   config:
-    - id: compaction-basic
-      name: '@deepseek-ai/dsh-compaction-basic'
+    - id: compaction-cacheaware
+      name: 'file:///F:/codexprojects/deepseek-harnes/compaction-reasonix/lib/index.js'
+      config:
+        compactRatio: 0.85
+        checkpointCeilingRatio: 0.5
+        recentTailRatio: 0.1
+        recentTailMinTokens: 32768
+        recentTailMaxTokens: 98304
+        summaryMaxTokens: 16384
 
     - id: command-compact
       name: '@deepseek-ai/dsh-command-compact'
