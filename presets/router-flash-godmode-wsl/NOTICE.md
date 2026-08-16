@@ -28,6 +28,9 @@ This preset `router-flash-godmode-wsl` is an **adapted** version of:
    stripped during bootstrap.
 8. **Persona optimized** with the paper's "commit to a decision and act"
    anchor (deep-then-converge).
+9. **Adaptive guidance (mode-boost style)**: per-message near-field guidance
+   via `agent/inbox/inserted`, with chat stand-down, round 3+ anti-dilution
+   boost, and simple/complex task dispatch.
 
 ## Files
 

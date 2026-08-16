@@ -12,7 +12,7 @@
  */
 
 import {
-  applyPersona, coreFor, personaFor, sessionMode, isFlashModel,
+  applyPersona, coreFor, extractText, guideFor, isChatTask, personaFor, sessionMode, isFlashModel,
 } from './router-core.mjs'
 
 /** Cordis plugin name used by loader diagnostics. */
@@ -23,6 +23,23 @@ export const inject = ['systemPrompt', 'tools']
 
 export function apply(ctx, config) {
   const overrides = new Map() // session id -> explicit mode（预留，供未来外部调优）
+  const firstUserText = new Map() // session id -> first real user text (chat detection)
+  const chatSessions = new Set() // sessions that stand down (greeting/chat)
+  const guided = new Map() // session id -> last guided user message id
+
+  // Capture the first real user message before assemble (rc.6 fix).
+  ctx.on('agent/inbox/claimed', (payload) => {
+    const agent = payload?.agent
+    const message = payload?.message
+    if (!agent || !message) return
+    const session = agent.session
+    if (!session) return
+    const data = message.data ?? message
+    const text = extractText(data)
+    if (!firstUserText.has(session.id) && text.trim()) {
+      firstUserText.set(session.id, text.trim())
+    }
+  })
   const PATH_CONVENTION =
     'Path convention (Windows + WSL):\n'
     + '- In bash, always use WSL paths (e.g. /mnt/f/projects/...).\n'
@@ -36,6 +53,13 @@ export function apply(ctx, config) {
     const agent = context.agent
     if (agent === undefined) return assembled
     const session = agent.session
+
+    // Chat/greeting sessions stand down: keep the original persona/tool surface.
+    const firstText = firstUserText.get(session.id)
+    if (firstText !== undefined && isChatTask(firstText)) {
+      chatSessions.add(session.id)
+      return assembled
+    }
 
     const modelId = agent.options?.model
     // Flash 模型一律走 weak（作者 w7 最优解）；非 Flash 走关键词分类。
@@ -83,5 +107,32 @@ export function apply(ctx, config) {
       ...decision,
       messages: decision.messages.filter((message) => !BOOTSTRAP_INJECTED_SOURCE_KINDS.has(message.source?.kind)),
     }
+  })
+
+  // ── near-field adaptive guidance (mode-boost style, depth-adaptive) ──
+  ctx.on('agent/inbox/inserted', (payload) => {
+    const agent = payload?.agent
+    const message = payload?.message
+    if (!agent || !message) return
+    const data = message.data ?? message
+    if (data.source?.kind !== 'user') return // only real user messages
+    const session = agent.session
+    if (!session) return
+    if (chatSessions.has(session.id)) return // chat sessions stand down
+    const text = extractText(data)
+    if (!text.trim()) return
+    if (guided.get(session.id) === message.id) return // dedupe
+    const round = session.events.filter((e) => e.type === 'user/message').length
+    const modelId = agent.options?.model
+    const guide = guideFor(round, text, modelId)
+    try {
+      agent.inbox.append('next-step', {
+        id: `router-guide-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        role: 'user',
+        source: { kind: 'plugin', plugin: 'router-bootstrap' },
+        content: [{ type: 'text', text: guide }],
+      })
+      guided.set(session.id, message.id)
+    } catch { /* duplicate/ordering races: skip */ }
   })
 }

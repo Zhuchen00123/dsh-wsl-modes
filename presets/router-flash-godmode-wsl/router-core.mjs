@@ -116,3 +116,42 @@ export function applyPersona(sections, personaText) {
   )
   return [...rest, { name: 'router-persona', text: personaText, order: 0 }]
 }
+
+
+// ── mode-boost style adaptive guidance (ported) ────────────────────────────
+
+const CHAT_RE = /^(你好|您好|hello|hi|hey|嗨|哈喽|在吗|谢谢|感谢|thanks|thank you|早上好|下午好|晚上好|嗯|好|ok|okay|yes|no|嗯嗯|好的)[!。.!？?~～]*$/i
+
+const COMPLEX_RE = /(重构|架构|全面|详细|设计|系统|优化|分析|survey|overview|architecture|refactor|comprehensive|detailed|design|system|optimize|analyze)/i
+
+export function isComplexTask(text) {
+  return typeof text === 'string' && (text.length > 120 || COMPLEX_RE.test(text))
+}
+
+export function isChatTask(text) {
+  if (typeof text !== 'string') return true
+  const t = text.trim()
+  if (t.length === 0) return true
+  if (CHAT_RE.test(t)) return true
+  if (t.length > 24) return false
+  return classifyTask(t) === 'weak'
+}
+
+export const GUIDE_BASE =
+  '\n\nRouter: classify this task (build or fix) now, then adopt the matching style — build: direct production; fix: inspect-first.'
+
+export const GUIDE_BOOST =
+  '\n\nRouter: this is a NEW task, different from the previous ones. Classify it fresh (build or fix) and adopt the matching style — build: direct production; fix: inspect-first. Do not follow the previous task\'s style.'
+
+export const GUIDE_COMMIT = ' Think deeply first, then commit and act.'
+
+export const GUIDE_DEEP = ' Think deeply about the architecture, edge cases, and integration points. Do not spend reasoning on the environment or tooling. Produce when your information is complete.'
+
+export const GUIDE_CLOSURE = ' End each reasoning block with a decision or an information need.'
+
+export function guideFor(round, text, modelId) {
+  const base = round >= 3 ? GUIDE_BOOST : GUIDE_BASE
+  if (!isComplexTask(text)) return base + GUIDE_COMMIT
+  const deep = base + GUIDE_DEEP
+  return isFlashModel(modelId) ? deep : deep + GUIDE_CLOSURE
+}
