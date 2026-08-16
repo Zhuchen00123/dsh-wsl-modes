@@ -1,0 +1,3 @@
+name: Router Flash Godmode (WSL)
+description: 'Flash 神模式（opencode-go）WSL 版：w7 引导 + WSL bash/bwrap 沙箱，build/fix 路由，首轮核心工具后放开全量。'
+order: 4

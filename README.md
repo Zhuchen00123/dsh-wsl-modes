@@ -1,18 +1,43 @@
 # DSH WSL Modes
 
-让 [DeepSeek Harness](https://github.com/deepseek-ai/dsh) 在 Windows 上使用 **WSL Linux bash + bubblewrap 沙箱**，并提供两个可直接使用的 Agent preset：
+让 [DeepSeek Harness](https://github.com/deepseek-ai/dsh) 在 Windows 上使用 **WSL Linux bash + bubblewrap 沙箱**，并提供三个可直接使用的 Agent preset：
 
 | Preset | 名称 | 说明 |
 |---|---|---|
 | `minimal-wsl` | 极简模式 (WSL) | 极简双工具：bash + `str_replace_editor`，另加 read/write/edit、glob/grep、plan、compact |
 | `code-wsl` | Code Mode (WSL) | 完整 Code Mode：PTC `run_code` + delegation/workflow + skills + plan/compact + 全量工具 |
+| `router-flash-godmode-wsl` | Router Flash Godmode (WSL) | Flash 神模式（opencode-go）：w7 引导 + build/fix 路由 + 首轮核心工具后放开全量 + WSL bash/bwrap |
 
-两个 preset 都内置 **两阶段锚定（anchored bootstrap）**：
+前两个 preset（`minimal-wsl` / `code-wsl`）内置 **两阶段锚定（anchored bootstrap）**：
 
-- 第一轮模型请求只暴露 `[bash, read]`，并把 `maxTokens` 压到 1024，锚定 Minimal 的推理轨迹；
+- 第一轮模型请求只暴露 `[bash, read]`，并把 `maxTokens` 压到 `16384`，锚定 Minimal 的推理轨迹；
 - 第一次持久 `tool/call` 或 `assistant/message` 后自动晋升；
 - 晋升后恢复该 preset 的完整工具目录；
 - 状态从持久 session events 推导，resume 不丢。
+
+第三个 preset（`router-flash-godmode-wsl`）使用 **Router 首轮核心工具引导**：
+
+- Flash 模型固定走 w7 神模式 persona；
+- 首轮只暴露 `read + write + edit + bash`；
+- 第一次 `tool/call` 后放开全量工具。
+
+## Router Flash Godmode (WSL) 来源
+
+本 preset 是以下项目的 **WSL 适配版**：
+
+- 上游适配版：[SheberDavid/v4-flash-godmode-opencode-go](https://github.com/SheberDavid/v4-flash-godmode-opencode-go)
+  - “V4 Flash 神模式 (opencode-go)”，针对 opencode-go 的 `deepseek-v4-flash`
+  - 注意：上游仓库**没有 LICENSE 文件**
+- 原版路由：[yjh051108/dsh-router-standard](https://github.com/yjh051108/dsh-router-standard)
+  - MIT License，Task-aware reasoning-mode router
+
+**本仓库的改动**：
+
+1. Windows 下也使用 WSL bash + bwrap（禁用 pwsh），而不是上游默认的 PowerShell
+2. compaction 换成 `dsh-compaction-cacheaware`（Reasonix 风格），不用官方 `compaction-basic`
+3. 重命名为 `Router Flash Godmode (WSL)`
+
+完整来源与改动记录见 [`presets/router-flash-godmode-wsl/NOTICE.md`](presets/router-flash-godmode-wsl/NOTICE.md)。
 
 ---
 
@@ -39,6 +64,12 @@ dsh-wsl-modes/
 │       ├── agent.cordis.yml
 │       ├── preset.yml
 │       └── tool-bootstrap.mjs
+│   └── router-flash-godmode-wsl/
+│       ├── agent.cordis.yml
+│       ├── preset.yml
+│       ├── router-bootstrap.mjs
+│       ├── router-core.mjs
+│       └── NOTICE.md               # 来源与改动说明
 └── host/
     └── dsh-wsl-bash/              # ctx.shell 执行器：wsl.exe + bwrap
         ├── cordis.patch.yml       # 挂载补丁：禁 pwsh-sandbox，挂 wsl-bash
@@ -82,7 +113,7 @@ cd dsh-wsl-modes
 
 ### 2. 安装 preset 到 DSH
 
-把 `presets/minimal-wsl` 和 `presets/code-wsl` 复制到：
+把 `presets/minimal-wsl`、`presets/code-wsl` 和 `presets/router-flash-godmode-wsl` 复制到：
 
 ```text
 %USERPROFILE%\.dsh\.agent-presets\
@@ -94,6 +125,7 @@ PowerShell：
 $dest = "$env:USERPROFILE\.dsh\.agent-presets"
 Copy-Item -Recurse -Force .\presets\minimal-wsl $dest
 Copy-Item -Recurse -Force .\presets\code-wsl $dest
+Copy-Item -Recurse -Force .\presets\router-flash-godmode-wsl $dest
 ```
 
 ### 3. 安装 compaction 插件
