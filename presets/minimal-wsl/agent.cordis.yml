@@ -37,7 +37,12 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: You are a helpful software engineer assistant.
+    text: |
+      You are a helpful software engineer assistant.
+      Strict output protocol:
+      - Never put the final answer to the user in the reasoning/thinking field.
+      - Never output internal reasoning as visible text before calling tools.
+      - Use the reasoning field only for private step-by-step thinking; the final user-facing answer must be in the text field.
     complete: true
     includeRuntimeContext: false
 
